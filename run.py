@@ -12,6 +12,6 @@ mobile.go_to_naver_calendar()
 
 _new = mobile.arrange_schedule(_notices)
 
-print(len(_new))
+mobile.add_schedule(_new[0])
 
 mobile.finalize()

@@ -97,15 +97,20 @@ class JobAlioCrawling:
                 for _row in selected_list:
                     _column = _row.select("td")
                     _link = f"https://job.alio.go.kr{_column[2].find('a').get('href')}"
-                    _title = _column[2].text.strip()
-                    _org = _column[3].text.strip()
+                    _title = f"[{_column[3].text.strip()}] {_column[2].text.strip()}"
                     _location = _column[4].text.strip().replace("\r", "").replace("\t", "").replace("\n","")
                     _work_type = _column[5].text.strip().replace("\r", "").replace("\t", "").replace("\n","")
                     _rigister_date = _column[6].text.strip().replace("\r", "").replace("\t", "").replace("\n","")
                     _deadline_date = _column[7].text.strip().replace("\r", "").replace("\t", "").replace("\n","")[:8]
                     _status = _column[8].text.strip()
 
-                    _parsing.append([_link, _title, _org, _location, _work_type, _rigister_date, _deadline_date, _status])
+                    _parsing.append({
+                        "title": _title,
+                        "rigister_date": _rigister_date,
+                        "deadline_date": f"20{_deadline_date}",
+                        "status": _status,
+                        "memo": f"고용형태:{_work_type}\n위치: {_location}\n공고링크:{_link}"
+                    })
             else:
                 MODUL_LOGGER.error(msg := f"Could not get the webpage. status code is {response.status_code}")
                 raise exception.RequestException(msg)

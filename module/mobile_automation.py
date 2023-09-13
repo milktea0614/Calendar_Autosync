@@ -87,9 +87,9 @@ class NaverCalendar:
 
         _search_editor = self._driver.find_element(by=AppiumBy.XPATH, value="//*[contains(@resource-id, 'id/search_keyword_editor')]")
         for _noti in notice_list:
-            MODUL_LOGGER.debug(f"Target title: {_noti[1]}")
+            MODUL_LOGGER.debug(f"Target title: {_noti['title']}")
             _search_editor.clear()
-            _search_editor.send_keys(_noti[1])
+            _search_editor.send_keys(_noti['title'])
 
             if self._driver.is_keyboard_shown():
                 self._driver.hide_keyboard()
@@ -107,7 +107,7 @@ class NaverCalendar:
             self._scroll(times=10)
 
             try:
-                _schedule_list = self._driver.find_elements(by=AppiumBy.XPATH, value=f"//*[contains(@resource-id, 'id/content') and @text='{_noti[1]}']")
+                _schedule_list = self._driver.find_elements(by=AppiumBy.XPATH, value=f"//*[contains(@resource-id, 'id/content') and @text='{_noti['title']}]")
             except (selenium.common.exceptions.NoSuchElementException, RuntimeError, TimeoutError):
                 _new.append(_noti)
                 continue
@@ -115,12 +115,12 @@ class NaverCalendar:
             TouchAction(self._driver).tap(_schedule_list[-1]).perform()
 
             _current_status_switch = self._driver.find_element(by=AppiumBy.XPATH, value="//*[contains(@resource-id, 'id/completeSwitch')]")
-            _update_status = True if "마감" in _noti[-1] else False
+            _update_status = True if "마감" in _noti['status'] else False
             _schedule_status = True if _current_status_switch.get_attribute("checked").lower() == "true" else False
 
             if _update_status != _schedule_status:
                 self._touch("//*[contains(@resource-id, 'id/completeSwitch')]")
-                MODUL_LOGGER.info(f"{_noti[1]} status is changed from {_schedule_status} to {_update_status}.")
+                MODUL_LOGGER.info(f"{_noti['title']} status is changed from {_schedule_status} to {_update_status}.")
             self._driver.back()
 
         self._driver.back()
@@ -132,19 +132,114 @@ class NaverCalendar:
 
         :param list notice: Notice.
         """
-        self._touch('//*[contains(@resource-id, "id/floating_write_button"]')
-        self._touch('//*[contains(@resource-id, "id/floating_action_menu_schedule"]')
+        self._touch('//*[contains(@resource-id, "id/floating_write_button")]')
+        self._touch('//*[contains(@resource-id, "id/floating_action_menu_schedule")]')
         MODUL_LOGGER.info("Open the adding schedule screen.")
 
-        _search_editor = self._driver.find_element(by=AppiumBy.XPATH, value="//*[contains(@resource-id, 'id/content')]")
-        _search_editor.send_keys(notice[1])
-        MODUL_LOGGER.debug(f"Input title: {notice[1]}")
+        _search_editor = self._driver.find_element(by=AppiumBy.XPATH, value="//*[@resource-id='com.nhn.android.calendar:id/content']")
+        _search_editor.clear()
+        _search_editor.send_keys(notice['title'])
+        MODUL_LOGGER.debug(f"Input title: {notice['title']}")
 
-        _all_day_button = self._driver.find_element(by=AppiumBy.XPATH, value="//*[contains(@resource-id, 'id/allday')]")
-        TouchAction(self._driver).tap(_all_day_button).perform()
+        self._touch("//*[contains(@resource-id, 'id/allday')]")
         MODUL_LOGGER.debug("Change the time option to all-day")
-        
-        # todo
+
+        self._control_date(notice['rigister_date'], notice['deadline_date'])
+
+        _memo = self._driver.find_element(by=AppiumBy.XPATH, value="//*[contains(@resource-id, 'id/memoEdit')]")
+        _memo.send_keys(notice['memo'])
+        MODUL_LOGGER.debug(f"Input memo: {notice['memo']}")
+
+        _calendar_name = self._driver.find_element(by=AppiumBy.XPATH, value="//*[contains(@resource-id, 'id/calendarName')]")
+        if _calendar_name.text != self._configuration["calendar"]:
+            TouchAction(self._driver).tap(_calendar_name).perform()
+            self._touch(f"//*[contains(@resource-id, 'id/calendarText') and @text='{self._configuration['calendar']}']")
+        MODUL_LOGGER.debug(f"Selected Calendar name: {self._configuration['calendar']}")
+
+        try:
+            self._touch("//*[contains(@resource-id, 'id/reminder_chip_view_remove')]")
+        except exception.AppiumException:
+            pass
+        MODUL_LOGGER.debug(f"Remove the reminder")
+
+        self._touch("//*[contains(@resource-id, 'id/toolbarConfirm')]")
+        MODUL_LOGGER.info(f"{notice['title']} is add.")
+
+    def _control_date(self, start_date, end_date):
+        """Control the date as target_date
+
+        :param str start_date: The YYYY.MM.DD format string.
+        :param str end_date: The YYYY.MM.DD format string.
+        """
+        self._touch("//*[contains(@resource-id, 'id/startDate')]")
+
+        _year_x, _year_y, _year_distance = self.__get_center_position("//*[contains(@resource-id, 'id/year')]")
+        _month_x, _month_y, _month_distance = self.__get_center_position("//*[contains(@resource-id, 'id/month')]")
+        _day_x, _day_y, _day_distance = self.__get_center_position("//*[contains(@resource-id, 'id/day')]")
+        _scroll_info = [
+            [_year_x, _year_y, _year_distance, "Year"],
+            [_month_x, _month_y, _month_distance, "Month"],
+            [_day_x, _day_y, _day_distance, "Day"]
+        ]
+        MODUL_LOGGER.debug("Get Date scroll position and distance for scroll.")
+
+        self.__set_date(start_date.split("."), "//*[contains(@resource-id, 'id/startDate')]", _scroll_info)
+        MODUL_LOGGER.debug("Change the start date.")
+
+        self._touch("//*[contains(@resource-id, 'id/endDate')]")
+        self.__set_date(end_date.split("."), "//*[contains(@resource-id, 'id/endDate')]", _scroll_info)
+        self._touch("//*[contains(@resource-id, 'id/endDate')]")
+        MODUL_LOGGER.debug("Change the end date.")
+
+    def __set_date(self, target, xpath, info_list):
+        """
+
+        :param list target: Target date information list.
+        :param str xpath:
+        :param info_list:
+        :return:
+        """
+        for i in range(3):
+            MODUL_LOGGER.debug(f"Set {info_list[i][-1]} value to {target[i]}")
+            try:
+                _current = self._driver.find_element(by=AppiumBy.XPATH, value=xpath).text.split("(")[0].split(".")[i]
+            except (selenium.common.exceptions.NoSuchElementException, RuntimeError, TimeoutError):
+                MODUL_LOGGER.exception(msg := f"Could not find the {xpath} elements.")
+                raise exception.AppiumException(msg)
+
+            if target[i] != _current:
+                _differ = int(target[i]) - int(_current)
+                _x = info_list[i][0]
+                _y_start = info_list[i][1]
+                if _differ > 0:
+                    _y_end = info_list[i][1] - info_list[i][2]
+                else:
+                    _y_end = info_list[i][1] + info_list[i][2]
+
+                for _ in range(abs(_differ)):
+                    TouchAction(self._driver).press(x=_x, y=_y_start).wait(100).move_to(x=_x, y=_y_end).release().perform()
+
+                # TODO
+
+    def __get_center_position(self, xpath, division=5):
+        """Get center position of element. And get distance for scroll.
+
+        :param str xpath: Target Xpath expression.
+        :param int division: Division value.
+        :return: x position, y position, distance
+        :rtype: int, int, int
+        """
+        self._driver.implicitly_wait(0.5)
+        try:
+            _target_ele = self._driver.find_element(by=AppiumBy.XPATH, value=xpath)
+        except (selenium.common.exceptions.NoSuchElementException, RuntimeError, TimeoutError):
+            MODUL_LOGGER.exception(msg := f"Could not find the '{xpath}' within 0.5 sec.")
+            raise exception.AppiumException(msg)
+
+        _x_position = _target_ele.location["x"] + (_target_ele.size["width"] / 2)
+        _y_position = _target_ele.location["y"] + (_target_ele.size["height"] / 2)
+        _distance = _target_ele.size["height"] / division / 2
+        return _x_position, _y_position, _distance
 
 
     def finalize(self):
@@ -157,7 +252,7 @@ class NaverCalendar:
 
         :param str xpath: Xpath expression.
         :param float timeout: Timeout for waiting (default=1.0).
-        :raise
+        :raise: exception.AppiumException: if exception occurs.
         """
         self._driver.implicitly_wait(timeout)
         try:
