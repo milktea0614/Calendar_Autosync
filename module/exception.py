@@ -1,4 +1,9 @@
 """Exception for Jobalio autosync."""
 
+
 class RequestException(Exception):
-    """Releated on request exception."""
+    """Related on request exception to web."""
+
+
+class AppiumException(Exception):
+    """Related on appium exception."""

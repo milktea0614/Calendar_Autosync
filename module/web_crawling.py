@@ -1,3 +1,5 @@
+"""Get the notice of employment summaries of Job-Alio site."""
+
 import datetime
 import json
 import logging
@@ -21,19 +23,19 @@ class JobAlioCrawling:
 
         :param str/dict configuration: Configuration path or Configuration dictionary.
         """
-        self.url = "https://job.alio.go.kr/recruit.do"
-        self.configuration = None
-        self.params = {
+        self._url = "https://job.alio.go.kr/recruit.do"
+        self._configuration = None
+        self._params = {
             "eduType": "multi",
             "order": "REG_DATE",
             "sort": "DESC"
         }
 
         if isinstance(configuration, str) and os.path.exists(configuration) and ('.json' in configuration):
-            with open(configuration) as _f:
-                self.configuration = json.load(_f)["web_crawling"]
+            with open(configuration, encoding="utf-8") as _f:
+                self._configuration = json.load(_f)["web_crawling"]
         elif isinstance(configuration, dict):
-            self.configuration = configuration["web_crawling"]
+            self._configuration = configuration["web_crawling"]
         else:
             raise TypeError
 
@@ -44,33 +46,34 @@ class JobAlioCrawling:
         current_date = datetime.datetime.now()
         start_date = current_date - datetime.timedelta(days=30)
 
-        self.params["s_date"] = start_date.strftime("%Y.%m.%d")
-        self.params["e_date"] = current_date.strftime("%Y.%m.%d")
+        self._params["s_date"] = start_date.strftime("%Y.%m.%d")
+        self._params["e_date"] = current_date.strftime("%Y.%m.%d")
 
-        if "detail_code" in self.configuration.keys():
-            self.params["detail_code"] = self.configuration["detail_code"]
-            MODUL_LOGGER.debug(f"'채용분야' is selected. [{self.__get_detail_code_info(self.configuration['detail_code'])}]")
+        if "detail_code" in self._configuration.keys():
+            self._params["detail_code"] = self._configuration["detail_code"]
+            MODUL_LOGGER.debug(f"'채용분야' is selected. [{self.__get_detail_code_info(self._configuration['detail_code'])}]")
 
-        if "location" in self.configuration.keys():
-            self.params["location"] = self.configuration["location"]
-            MODUL_LOGGER.debug(f"'위치' is selected. [{self.__get_location_info(self.configuration['location'])}]")
+        if "location" in self._configuration.keys():
+            self._params["location"] = self._configuration["location"]
+            MODUL_LOGGER.debug(f"'위치' is selected. [{self.__get_location_info(self._configuration['location'])}]")
 
-        if "work_type" in self.configuration.keys():
-            self.params["work_type"] = self.configuration["work_type"]
-            MODUL_LOGGER.debug(f"'고용형태' is selected. [{self.__get_work_type_info(self.configuration['work_type'])}]")
+        if "work_type" in self._configuration.keys():
+            self._params["work_type"] = self._configuration["work_type"]
+            MODUL_LOGGER.debug(f"'고용형태' is selected. [{self.__get_work_type_info(self._configuration['work_type'])}]")
 
-        if "career" in self.configuration.keys():
-            self.params["career"] = self.configuration["career"]
-            MODUL_LOGGER.debug(f"'채용 구분' is selected. [{self.__get_career_info(self.configuration['career'])}]")
+        if "career" in self._configuration.keys():
+            self._params["career"] = self._configuration["career"]
+            MODUL_LOGGER.debug(f"'채용 구분' is selected. [{self.__get_career_info(self._configuration['career'])}]")
 
-        if "education" in self.configuration.keys():
-            self.params["education"] = self.configuration["education"]
-            MODUL_LOGGER.debug(f"'학력 정보' is selected. [{self.__get_education_info(self.configuration['education'])}]")
-
+        if "education" in self._configuration.keys():
+            self._params["education"] = self._configuration["education"]
+            MODUL_LOGGER.debug(f"'학력 정보' is selected. [{self.__get_education_info(self._configuration['education'])}]")
 
     def start(self):
         """Get all page information.
 
+        :return: Parsed data list.
+        :rtype: list
         :raise RequestException: if request is not normal.
         """
 
@@ -80,9 +83,9 @@ class JobAlioCrawling:
         _pageNo = 1
 
         while True:
-            self.params["pageNo"] = _pageNo
-            MODUL_LOGGER.info(f"Get ({_pageNo})th page information...")
-            response = requests.get(self.url, params=self.params)
+            self._params["pageNo"] = _pageNo
+            MODUL_LOGGER.debug(f"Get ({_pageNo}) th page information...")
+            response = requests.get(self._url, params=self._params)
 
             if response.status_code == 200:
                 my_soup = BeautifulSoup(response.content, "html.parser")
@@ -93,13 +96,13 @@ class JobAlioCrawling:
 
                 for _row in selected_list:
                     _column = _row.select("td")
-                    _link = _column[2].find('a').get('href')
+                    _link = f"https://job.alio.go.kr{_column[2].find('a').get('href')}"
                     _title = _column[2].text.strip()
                     _org = _column[3].text.strip()
-                    _location = _column[4].text.strip().replace("\r","").replace("\t", "").replace("\n","")
-                    _work_type = _column[5].text.strip().replace("\r","").replace("\t", "").replace("\n","")
-                    _rigister_date = _column[6].text.strip().replace("\r","").replace("\t", "").replace("\n","")
-                    _deadline_date = _column[7].text.strip().replace("\r","").replace("\t", "").replace("\n","")[:8]
+                    _location = _column[4].text.strip().replace("\r", "").replace("\t", "").replace("\n","")
+                    _work_type = _column[5].text.strip().replace("\r", "").replace("\t", "").replace("\n","")
+                    _rigister_date = _column[6].text.strip().replace("\r", "").replace("\t", "").replace("\n","")
+                    _deadline_date = _column[7].text.strip().replace("\r", "").replace("\t", "").replace("\n","")[:8]
                     _status = _column[8].text.strip()
 
                     _parsing.append([_link, _title, _org, _location, _work_type, _rigister_date, _deadline_date, _status])
@@ -109,10 +112,8 @@ class JobAlioCrawling:
 
             _pageNo += 1
 
-        MODUL_LOGGER.debug(f"length: {len(_parsing)}")
-        for i in _parsing:
-            print(i)
-
+        MODUL_LOGGER.info(f"Total notice of employment: {len(_parsing)}")
+        return _parsing
 
     def __get_detail_code_info(self, detail_codes) -> list:
         """Return selected detail code information.

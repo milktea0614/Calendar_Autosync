@@ -19,5 +19,19 @@
         "R7010",
         "R7050"
       ]
+  },
+  "mobile": {
+    "capabilities": {
+      "platformName": "Android",
+      "platformVersion": "12",
+      "automationName": "uiautomator2",
+      "deviceName": "R54T3022FVH",
+      "appPackage": "com.android.settings",
+      "appActivity": ".Settings",
+      "isRealMobile": true,
+      "noReset": false
+
+    },
+    "calendar": "공기업 - 정보통신"
   }
 }
