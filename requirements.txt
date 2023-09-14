@@ -1,4 +1,4 @@
 requests~=2.31.0
 beautifulsoup4~=4.12.2
-miraelogger~=0.0.2
+miraelogger~=0.0.3
 Appium-Python-Client~=2.11.1
