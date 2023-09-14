@@ -12,6 +12,7 @@ mobile.go_to_naver_calendar()
 
 _new = mobile.arrange_schedule(_notices)
 
-mobile.add_schedule(_new[0])
+for _noti in _new:
+    mobile.add_schedule(_noti)
 
 mobile.finalize()

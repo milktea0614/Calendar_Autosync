@@ -94,33 +94,32 @@ class NaverCalendar:
             if self._driver.is_keyboard_shown():
                 self._driver.hide_keyboard()
 
+            # 1st confirmation - empty text
             _empty_view = None
             try:
                 _empty_view = self._driver.find_elements(by=AppiumBy.XPATH,value="//*[contains(@resource-id, 'id/empty_view')]")
             except (selenium.common.exceptions.NoSuchElementException, RuntimeError, TimeoutError):
                 pass
 
-            if _empty_view is not None:
+            if isinstance(_empty_view, list) and (len(_empty_view) > 0):
                 _new.append(_noti)
                 continue
 
-            self._scroll(times=10)
+            # Second confirmation - start date comparison for title duplication situations
+            self._scroll_to_bottom()
 
             try:
-                _schedule_list = self._driver.find_elements(by=AppiumBy.XPATH, value=f"//*[contains(@resource-id, 'id/content') and @text='{_noti['title']}]")
+                _schedule_list = self._driver.find_elements(by=AppiumBy.XPATH, value=f"//*[contains(@resource-id, 'id/content') and @text='{_noti['title']}']")
             except (selenium.common.exceptions.NoSuchElementException, RuntimeError, TimeoutError):
                 _new.append(_noti)
                 continue
 
             TouchAction(self._driver).tap(_schedule_list[-1]).perform()
 
-            _current_status_switch = self._driver.find_element(by=AppiumBy.XPATH, value="//*[contains(@resource-id, 'id/completeSwitch')]")
-            _update_status = True if "마감" in _noti['status'] else False
-            _schedule_status = True if _current_status_switch.get_attribute("checked").lower() == "true" else False
+            _start_date = self._driver.find_element(by=AppiumBy.XPATH, value="//*[contains(@resource-id, 'id/startDate')]").text
 
-            if _update_status != _schedule_status:
-                self._touch("//*[contains(@resource-id, 'id/completeSwitch')]")
-                MODUL_LOGGER.info(f"{_noti['title']} status is changed from {_schedule_status} to {_update_status}.")
+            if _noti['rigister_date'] not in _start_date:
+                _new.append(_noti)
             self._driver.back()
 
         self._driver.back()
@@ -141,8 +140,10 @@ class NaverCalendar:
         _search_editor.send_keys(notice['title'])
         MODUL_LOGGER.debug(f"Input title: {notice['title']}")
 
-        self._touch("//*[contains(@resource-id, 'id/allday')]")
-        MODUL_LOGGER.debug("Change the time option to all-day")
+        _all_day_btn = self._driver.find_element(by=AppiumBy.XPATH, value="//*[contains(@resource-id, 'id/allday')]")
+        if _all_day_btn.is_selected() is False:
+            TouchAction(self._driver).tap(_all_day_btn).perform()
+            MODUL_LOGGER.debug("Change the time option to all-day")
 
         self._control_date(notice['rigister_date'], notice['deadline_date'])
 
@@ -200,15 +201,14 @@ class NaverCalendar:
         :return:
         """
         for i in range(3):
-            MODUL_LOGGER.debug(f"Set {info_list[i][-1]} value to {target[i]}")
             try:
-                _current = self._driver.find_element(by=AppiumBy.XPATH, value=xpath).text.split("(")[0].split(".")[i]
+                _current = self._driver.find_element(by=AppiumBy.XPATH, value=xpath).text.split("(")[0].split(".")
             except (selenium.common.exceptions.NoSuchElementException, RuntimeError, TimeoutError):
                 MODUL_LOGGER.exception(msg := f"Could not find the {xpath} elements.")
                 raise exception.AppiumException(msg)
 
-            if target[i] != _current:
-                _differ = int(target[i]) - int(_current)
+            if target[i] != _current[i]:
+                _differ = int(target[i]) - int(_current[i])
                 _x = info_list[i][0]
                 _y_start = info_list[i][1]
                 if _differ > 0:
@@ -217,9 +217,11 @@ class NaverCalendar:
                     _y_end = info_list[i][1] + info_list[i][2]
 
                 for _ in range(abs(_differ)):
-                    TouchAction(self._driver).press(x=_x, y=_y_start).wait(100).move_to(x=_x, y=_y_end).release().perform()
+                    TouchAction(self._driver).press(x=_x, y=_y_start).wait(100).move_to(x=_x, y=_y_end).release().wait(100).perform()
 
-                # TODO
+            _current = self._driver.find_element(by=AppiumBy.XPATH, value=xpath).text.split("(")[0].split(".")
+            if target[i] != _current[i]:
+                MODUL_LOGGER.error(f"Set {info_list[i][-1]} value to {target[i]} failed.")
 
     def __get_center_position(self, xpath, division=5):
         """Get center position of element. And get distance for scroll.
@@ -238,12 +240,15 @@ class NaverCalendar:
 
         _x_position = _target_ele.location["x"] + (_target_ele.size["width"] / 2)
         _y_position = _target_ele.location["y"] + (_target_ele.size["height"] / 2)
-        _distance = _target_ele.size["height"] / division / 2
+        _distance = _target_ele.size["height"] / division / 4 * 3
         return _x_position, _y_position, _distance
 
 
     def finalize(self):
         """Finalize."""
+        MODUL_LOGGER.debug("Go to Home")
+        self._driver.press_keycode(3)
+
         self._driver.quit()
         self._appium_service.stop()
 
@@ -265,6 +270,17 @@ class NaverCalendar:
         except TimeoutError:
             MODUL_LOGGER.exception(msg := f"Could not find the '{xpath}' within {timeout} sec.")
             raise exception.AppiumException(msg)
+
+    def _scroll_to_bottom(self) -> None:
+        """Scroll to bottom."""
+        _previous_page = self._driver.page_source
+
+        for _ in range(100):
+            self._scroll()
+            _current_page = self._driver.page_source
+            if _previous_page == _current_page:
+                break
+            _previous_page = _current_page
 
     def _scroll(self, direction="up", times=1, x_position=None) -> None:
         """Scroll the screen.
