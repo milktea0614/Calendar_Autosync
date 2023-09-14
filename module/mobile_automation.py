@@ -17,18 +17,21 @@ from appium.webdriver.common.touch_action import TouchAction
 from miraelogger import Logger
 from module import exception
 
-MODUL_LOGGER = Logger(log_name=__name__, stream_log_level=logging.DEBUG)
-
 
 class NaverCalendar:
     """Naver Calendar control class."""
 
-    def __init__(self, configuration: Union[str, dict]):
+    def __init__(self, configuration: Union[str, dict], logger=None):
         """Initialize the object.
 
         :param str/dict configuration: Configuration path or Configuration dictionary.
+        :param logger logger: Logger.
         """
         self._configuration = None
+        if logger is not None:
+            self._logger = logger
+        else:
+            self._logger = Logger(log_name=__name__, stream_log_level=logging.DEBUG).logger
 
         if isinstance(configuration, str) and os.path.exists(configuration) and ('.json' in configuration):
             with open(configuration, encoding="utf-8") as _f:
@@ -41,22 +44,23 @@ class NaverCalendar:
         try:
             self._appium_service = appium.webdriver.appium_service.AppiumService()
             self._appium_service.start(args=["--relaxed-security", "--log-timestamp"])
-            MODUL_LOGGER.info(f"Appium service is started.")
+            self._logger.info(f"Appium service is started.")
         except appium.webdriver.appium_service.AppiumServiceError as e:
             raise exception.AppiumException(e)
 
         try:
             self._driver = webdriver.Remote(r"http://localhost:4723", self._configuration["capabilities"])
-            MODUL_LOGGER.info(f"{self._configuration['capabilities']['deviceName']} is connected.")
+            self._logger.info(f"{self._configuration['capabilities']['deviceName']} is connected.")
         except urllib3.exceptions.MaxRetryError as e:
             raise exception.AppiumException(e)
 
-        MODUL_LOGGER.info("NaverCalendar initialize finish.")
+        self._logger.debug("NaverCalendar initialize finish.")
 
     def go_to_naver_calendar(self):
         """Open the Naver calendar."""
+        self._logger.info("Go to the Naver calendar...")
 
-        MODUL_LOGGER.debug("Go to Home")
+        self._logger.debug("Go to Home")
         self._driver.press_keycode(3)
 
         self._touch('//*[@content-desc="네이버 캘린더"]')
@@ -71,13 +75,14 @@ class NaverCalendar:
         :return: New notice list.
         :rtype: list.
         """
+        self._logger.info("Arrange the schedule of the Web crawling result start...")
         _exist = []
         _new = []
 
         self._touch("//*[contains(@resource-id, 'id/menu_search')]")
         time.sleep(0.5)
 
-        MODUL_LOGGER.info("Setup the search filter.")
+        self._logger.debug("Setup the search filter.")
         self._touch("//*[contains(@resource-id, 'id/search_filter')]")
         self._touch("//*[contains(@resource-id, 'id/searchFilterInit')]")
         self._touch("//*[contains(@resource-id, 'id/calendarFilter')]")
@@ -87,7 +92,7 @@ class NaverCalendar:
 
         _search_editor = self._driver.find_element(by=AppiumBy.XPATH, value="//*[contains(@resource-id, 'id/search_keyword_editor')]")
         for _noti in notice_list:
-            MODUL_LOGGER.debug(f"Target title: {_noti['title']}")
+            self._logger.debug(f"Target title: {_noti['title']}")
             _search_editor.clear()
             _search_editor.send_keys(_noti['title'])
 
@@ -116,6 +121,7 @@ class NaverCalendar:
 
             TouchAction(self._driver).tap(_schedule_list[-1]).perform()
 
+            self._driver.implicitly_wait(1.0)
             _start_date = self._driver.find_element(by=AppiumBy.XPATH, value="//*[contains(@resource-id, 'id/startDate')]").text
 
             if _noti['rigister_date'] not in _start_date:
@@ -123,7 +129,8 @@ class NaverCalendar:
             self._driver.back()
 
         self._driver.back()
-        MODUL_LOGGER.info(f"New notice: {len(_new)}, Exists notice: {len(notice_list) - len(_new)}")
+        self._logger.info("Arrange the schedule of the Web crawling result is finish")
+        self._logger.info(f"New notice: {len(_new)}, Exists notice: {len(notice_list) - len(_new)}")
         return _new
 
     def add_schedule(self, notice) -> None:
@@ -133,38 +140,38 @@ class NaverCalendar:
         """
         self._touch('//*[contains(@resource-id, "id/floating_write_button")]')
         self._touch('//*[contains(@resource-id, "id/floating_action_menu_schedule")]')
-        MODUL_LOGGER.info("Open the adding schedule screen.")
+        self._logger.info("Open the adding schedule screen.")
 
         _search_editor = self._driver.find_element(by=AppiumBy.XPATH, value="//*[@resource-id='com.nhn.android.calendar:id/content']")
         _search_editor.clear()
         _search_editor.send_keys(notice['title'])
-        MODUL_LOGGER.debug(f"Input title: {notice['title']}")
+        self._logger.debug(f"Input title: {notice['title']}")
 
         _all_day_btn = self._driver.find_element(by=AppiumBy.XPATH, value="//*[contains(@resource-id, 'id/allday')]")
         if _all_day_btn.is_selected() is False:
             TouchAction(self._driver).tap(_all_day_btn).perform()
-            MODUL_LOGGER.debug("Change the time option to all-day")
+            self._logger.debug("Change the time option to all-day")
 
         self._control_date(notice['rigister_date'], notice['deadline_date'])
 
         _memo = self._driver.find_element(by=AppiumBy.XPATH, value="//*[contains(@resource-id, 'id/memoEdit')]")
         _memo.send_keys(notice['memo'])
-        MODUL_LOGGER.debug(f"Input memo: {notice['memo']}")
+        self._logger.debug(f"Input memo: {notice['memo']}")
 
         _calendar_name = self._driver.find_element(by=AppiumBy.XPATH, value="//*[contains(@resource-id, 'id/calendarName')]")
         if _calendar_name.text != self._configuration["calendar"]:
             TouchAction(self._driver).tap(_calendar_name).perform()
             self._touch(f"//*[contains(@resource-id, 'id/calendarText') and @text='{self._configuration['calendar']}']")
-        MODUL_LOGGER.debug(f"Selected Calendar name: {self._configuration['calendar']}")
+        self._logger.debug(f"Selected Calendar name: {self._configuration['calendar']}")
 
         try:
             self._touch("//*[contains(@resource-id, 'id/reminder_chip_view_remove')]")
         except exception.AppiumException:
             pass
-        MODUL_LOGGER.debug(f"Remove the reminder")
+        self._logger.debug(f"Remove the reminder")
 
         self._touch("//*[contains(@resource-id, 'id/toolbarConfirm')]")
-        MODUL_LOGGER.info(f"{notice['title']} is add.")
+        self._logger.debug(f"{notice['title']} is add.")
 
     def _control_date(self, start_date, end_date):
         """Control the date as target_date
@@ -182,15 +189,15 @@ class NaverCalendar:
             [_month_x, _month_y, _month_distance, "Month"],
             [_day_x, _day_y, _day_distance, "Day"]
         ]
-        MODUL_LOGGER.debug("Get Date scroll position and distance for scroll.")
+        self._logger.debug("Get Date scroll position and distance for scroll.")
 
         self.__set_date(start_date.split("."), "//*[contains(@resource-id, 'id/startDate')]", _scroll_info)
-        MODUL_LOGGER.debug("Change the start date.")
+        self._logger.debug("Change the start date.")
 
         self._touch("//*[contains(@resource-id, 'id/endDate')]")
         self.__set_date(end_date.split("."), "//*[contains(@resource-id, 'id/endDate')]", _scroll_info)
         self._touch("//*[contains(@resource-id, 'id/endDate')]")
-        MODUL_LOGGER.debug("Change the end date.")
+        self._logger.debug("Change the end date.")
 
     def __set_date(self, target, xpath, info_list):
         """
@@ -204,7 +211,7 @@ class NaverCalendar:
             try:
                 _current = self._driver.find_element(by=AppiumBy.XPATH, value=xpath).text.split("(")[0].split(".")
             except (selenium.common.exceptions.NoSuchElementException, RuntimeError, TimeoutError):
-                MODUL_LOGGER.exception(msg := f"Could not find the {xpath} elements.")
+                self._logger.exception(msg := f"Could not find the {xpath} elements.")
                 raise exception.AppiumException(msg)
 
             if target[i] != _current[i]:
@@ -221,7 +228,7 @@ class NaverCalendar:
 
             _current = self._driver.find_element(by=AppiumBy.XPATH, value=xpath).text.split("(")[0].split(".")
             if target[i] != _current[i]:
-                MODUL_LOGGER.error(f"Set {info_list[i][-1]} value to {target[i]} failed.")
+                self._logger.error(f"Set {info_list[i][-1]} value to {target[i]} failed.")
 
     def __get_center_position(self, xpath, division=5):
         """Get center position of element. And get distance for scroll.
@@ -235,7 +242,7 @@ class NaverCalendar:
         try:
             _target_ele = self._driver.find_element(by=AppiumBy.XPATH, value=xpath)
         except (selenium.common.exceptions.NoSuchElementException, RuntimeError, TimeoutError):
-            MODUL_LOGGER.exception(msg := f"Could not find the '{xpath}' within 0.5 sec.")
+            self._logger.exception(msg := f"Could not find the '{xpath}' within 0.5 sec.")
             raise exception.AppiumException(msg)
 
         _x_position = _target_ele.location["x"] + (_target_ele.size["width"] / 2)
@@ -243,14 +250,15 @@ class NaverCalendar:
         _distance = _target_ele.size["height"] / division / 4 * 3
         return _x_position, _y_position, _distance
 
-
     def finalize(self):
         """Finalize."""
-        MODUL_LOGGER.debug("Go to Home")
+        self._logger.debug("Go to Home")
         self._driver.press_keycode(3)
 
         self._driver.quit()
+        self._logger.info(f"{self._configuration['capabilities']['deviceName']} is disconnected.")
         self._appium_service.stop()
+        self._logger.info("Appium service is stopped.")
 
     def _touch(self, xpath, timeout=1.0) -> None:
         """Touch element.
@@ -263,12 +271,12 @@ class NaverCalendar:
         try:
             _target = self._driver.find_element(by=AppiumBy.XPATH, value=xpath)
             TouchAction(self._driver).tap(_target).perform()
-            MODUL_LOGGER.debug(f"Touch the '{xpath}' is success.")
+            self._logger.debug(f"Touch the '{xpath}' is success.")
         except (selenium.common.exceptions.NoSuchElementException, RuntimeError):
-            MODUL_LOGGER.exception(msg := f"Touch the '{xpath}' is failed")
+            self._logger.exception(msg := f"Touch the '{xpath}' is failed")
             raise exception.AppiumException(msg)
         except TimeoutError:
-            MODUL_LOGGER.exception(msg := f"Could not find the '{xpath}' within {timeout} sec.")
+            self._logger.exception(msg := f"Could not find the '{xpath}' within {timeout} sec.")
             raise exception.AppiumException(msg)
 
     def _scroll_to_bottom(self) -> None:
@@ -290,7 +298,7 @@ class NaverCalendar:
         :param int x_position: Standard X position. (default=None)
         """
         if direction.lower() not in ["up", "down"]:
-            MODUL_LOGGER.exception(
+            self._logger.exception(
                 msg := "Please check the 'direction' value. The 'direction' value must be in ['up', 'down']")
             raise ValueError(msg)
 
@@ -309,7 +317,7 @@ class NaverCalendar:
                 elif direction.lower() == "down":
                     TouchAction(self._driver).press(x=x_position, y=int(_height / 2)).wait(100).move_to(x=x_position, y=int(
                         _height / 4 * 3)).release().perform()
-            MODUL_LOGGER.debug(f"Scroll to {direction} is finish.")
+            self._logger.debug(f"Scroll to {direction} is finish.")
         except Exception:
-            MODUL_LOGGER.exception(msg := f"Could not scroll to {direction}.")
+            self._logger.exception(msg := f"Could not scroll to {direction}.")
             raise Exception(msg)
