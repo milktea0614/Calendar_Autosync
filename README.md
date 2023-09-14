@@ -1,4 +1,4 @@
-# Jobalio_Autosync
+# Calendar_Autosync
 Autosync the Job Alio site information into Naver calendar
 
 ---
