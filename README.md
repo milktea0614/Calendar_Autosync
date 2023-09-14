@@ -2,6 +2,11 @@
 Autosync the Job Alio site information into Naver calendar
 
 ---
+## Mobile configuration information
+
+Refer to https://appium.io/docs/en/2.1/guides/caps/
+
+---
 
 ## Web crawling configuration information
 
