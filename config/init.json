@@ -29,7 +29,7 @@
       "appPackage": "com.android.settings",
       "appActivity": ".Settings",
       "isRealMobile": true,
-      "noReset": false
+      "noReset":true
 
     },
     "calendar": "공기업 - 정보통신"
