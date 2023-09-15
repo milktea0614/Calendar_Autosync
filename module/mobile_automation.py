@@ -42,6 +42,7 @@ class NaverCalendar:
             raise TypeError
 
         try:
+            self._logger.info(f"Appium service start...")
             self._appium_service = appium.webdriver.appium_service.AppiumService()
             self._appium_service.start(args=["--relaxed-security", "--log-timestamp"])
             self._logger.info(f"Appium service is started.")
@@ -49,6 +50,7 @@ class NaverCalendar:
             raise exception.AppiumException(e)
 
         try:
+            self._logger.info(f"{self._configuration['capabilities']['deviceName']} connect...")
             self._driver = webdriver.Remote(r"http://localhost:4723", self._configuration["capabilities"])
             self._logger.info(f"{self._configuration['capabilities']['deviceName']} is connected.")
         except urllib3.exceptions.MaxRetryError as e:

@@ -1,5 +1,8 @@
 # Calendar_Autosync
-Autosync the Job Alio site information into Naver calendar
+Autosync the specific site information into calendar.
+
+Able site: Job-Alio
+Able calendar: Naver calendar Mobile App.
 
 ---
 ## Mobile configuration information
