@@ -1,0 +1,37 @@
+{
+  "web_crawling": {
+    "detail_code": ["600020"],
+      "location": [
+        "R3010",
+        "R3011",
+        "R3012",
+        "R3025"
+      ],
+      "work_type": [
+        "R1010"
+      ],
+      "career": [
+        "R2010",
+        "R2020",
+        "R2030"
+      ],
+      "education": [
+        "R7010",
+        "R7050"
+      ]
+  },
+  "mobile": {
+    "capabilities": {
+      "platformName": "Android",
+      "platformVersion": "12",
+      "automationName": "uiautomator2",
+      "deviceName": "R54T3022FVH",
+      "appPackage": "com.android.settings",
+      "appActivity": ".Settings",
+      "isRealMobile": true,
+      "noReset": true
+
+    },
+    "calendar": "공기업 - 정보통신"
+  }
+}
