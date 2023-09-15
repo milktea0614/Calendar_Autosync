@@ -1,8 +1,22 @@
 # Calendar_Autosync
 Autosync the specific site information into calendar.
 
-Able site: Job-Alio
+&nbsp;
+
+Able site: [Job-Alio](https://job.alio.go.kr/recruit.do)
+
 Able calendar: Naver calendar Mobile App.
+
+&nbsp;
+
+---
+## Result
+<details>
+<summary><b>Show run_jobalio_naver.py result.</b></summary>
+<br>
+<img src="_result/2023-09-15 12-26-53_run_jobalio_naver.gif" alt="run_jobalio_naver.py result">
+<br>
+</details>
 
 ---
 ## Mobile configuration information
@@ -56,7 +70,7 @@ Code for selecting the '채용분야'. (Optional, Multi-selectable)
 ### location
 Code for selecting the '위치'. (Optional, Multi-selectable)
 <details>
-<summary>Show the location list</summary>
+<summary><b>Show the location list</b></summary>
 
 - R3009 = 해외 
 - R3010 = 서울특별시
@@ -82,7 +96,7 @@ Code for selecting the '위치'. (Optional, Multi-selectable)
 ### work_type
 Code for selecting the '고용형태'. (Optional, Multi-selectable)
 <details>
-<summary>Show the work_type list</summary>
+<summary><b>Show the work_type list</b></summary>
 
 - R1010 = 정규직
 - R1030 = 무기계약직
@@ -95,7 +109,7 @@ Code for selecting the '고용형태'. (Optional, Multi-selectable)
 ### career
 Code for selecting the '채용 구분'. (Optional, Multi-selectable)
 <details>
-<summary>Show the career list</summary>
+<summary><b>Show the career list</b></summary>
 
 - R2010 = 신입
 - R2020 = 경력
@@ -107,7 +121,7 @@ Code for selecting the '채용 구분'. (Optional, Multi-selectable)
 ### education
 Code for selecting the '학력 정보'. (Optional, Multi-selectable)
 <details>
-<summary>Show the career list</summary>
+<summary><b>Show the career list</b></summary>
 
 - R7010 = 학력무관
 - R7020 = 중졸이하
