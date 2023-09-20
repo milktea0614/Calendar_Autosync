@@ -1,7 +1,7 @@
 import os.path
 
 from miraelogger import Logger
-from module.web_crawling import JobAlioScraping
+from module.web_scraping import JobAlioScraping
 from module.mobile_automation import NaverCalendar
 
 
