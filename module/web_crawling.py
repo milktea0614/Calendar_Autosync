@@ -13,8 +13,8 @@ from miraelogger import Logger
 from module import exception
 
 
-class JobAlioCrawling:
-    """Job-Alio Web crawling class."""
+class JobAlioScraping:
+    """Job-Alio Web scraping class."""
 
     def __init__(self, configuration: Union[str, dict], logger=None):
         """Initialize the object.
@@ -36,13 +36,13 @@ class JobAlioCrawling:
 
         if isinstance(configuration, str) and os.path.exists(configuration) and ('.json' in configuration):
             with open(configuration, encoding="utf-8") as _f:
-                self._configuration = json.load(_f)["web_crawling"]
+                self._configuration = json.load(_f)["web_scraping"]
         elif isinstance(configuration, dict):
-            self._configuration = configuration["web_crawling"]
+            self._configuration = configuration["web_scraping"]
         else:
             raise TypeError
 
-        self._logger.debug("JobAlioCrawling initialize finish.")
+        self._logger.debug("JobAlioScraping initialize finish.")
 
     def _create_params(self) -> None:
         """Create params for requests."""
@@ -85,7 +85,7 @@ class JobAlioCrawling:
         _parsing = []
         _pageNo = 1
 
-        self._logger.info("Web crawling start...")
+        self._logger.info("Web scraping start...")
         while True:
             self._params["pageNo"] = _pageNo
             self._logger.debug(f"Get ({_pageNo}) th page information...")
@@ -121,7 +121,7 @@ class JobAlioCrawling:
 
             _pageNo += 1
 
-        self._logger.info(f"Web crawling is finish. (Total notice of employment: {len(_parsing)})")
+        self._logger.info(f"Web scraping is finish. (Total notice of employment: {len(_parsing)})")
         return _parsing
 
     def __get_detail_code_info(self, detail_codes) -> list:

@@ -1,6 +1,8 @@
 # Calendar_Autosync
 Autosync the specific site information into calendar.
 
+**History**: https://milktea0614.tistory.com/79
+
 &nbsp;
 
 Able site: [Job-Alio](https://job.alio.go.kr/recruit.do)
@@ -25,7 +27,7 @@ Refer to https://appium.io/docs/en/2.1/guides/caps/
 
 ---
 
-## Web crawling configuration information
+## Web scraping configuration information
 
 ### Fixed values
 

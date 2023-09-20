@@ -77,7 +77,7 @@ class NaverCalendar:
         :return: New notice list.
         :rtype: list.
         """
-        self._logger.info("Arrange the schedule of the Web crawling result start...")
+        self._logger.info("Arrange the schedule of the Web scraping result start...")
         _exist = []
         _new = []
 
@@ -131,7 +131,7 @@ class NaverCalendar:
             self._driver.back()
 
         self._driver.back()
-        self._logger.info("Arrange the schedule of the Web crawling result is finish")
+        self._logger.info("Arrange the schedule of the Web scraping result is finish")
         self._logger.info(f"New notice: {len(_new)}, Exists notice: {len(notice_list) - len(_new)}")
         return _new
 
