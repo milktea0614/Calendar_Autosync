@@ -1,6 +1,8 @@
 # Calendar_Autosync
 Autosync the specific site information into calendar.
 
+**History**: https://milktea0614.tistory.com/79
+
 &nbsp;
 
 Able site: [Job-Alio](https://job.alio.go.kr/recruit.do)
@@ -25,7 +27,7 @@ Refer to https://appium.io/docs/en/2.1/guides/caps/
 
 ---
 
-## Web crawling configuration information
+## Web scraping configuration information
 
 ### Fixed values
 
@@ -133,4 +135,25 @@ Code for selecting the '학력 정보'. (Optional, Multi-selectable)
 
 </details>
 
+---
+
+## Flowchart
+
+```mermaid 
+flowchart TD;
+    A([start]) -->|run main script.| B[Access Target site];
+    B --> C[Get current web site information.];
+    C --> G{"If could get job list (Can find data)"};
+    G -->|False| H[Start the Appium service];
+    G -->|True| I[Parsing and save the useful web element data.];
+    I --> F[Go to next page];
+    F --> C;
+    H --> J[Connect Android device];
+    J --> K[Go to the Calendar App.];
+    K --> L[Arrange the duplicated schedule using title and date];
+    L --> N{Is New schedule found?};
+    N -->|True| M[Add new schedule];
+    N -->|False| O;
+    M --> O([End]);
+```
 ---

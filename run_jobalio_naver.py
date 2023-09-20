@@ -1,14 +1,14 @@
 import os.path
 
 from miraelogger import Logger
-from module.web_crawling import JobAlioCrawling
+from module.web_scraping import JobAlioScraping
 from module.mobile_automation import NaverCalendar
 
 
 MAIN_LOGGER = Logger(__name__, os.path.realpath("./log/calendar_autosync.log")).logger
 
-job_crawling = JobAlioCrawling("./config/init.json", MAIN_LOGGER)
-_notices = job_crawling.start()
+job_scraping = JobAlioScraping("./config/init.json", MAIN_LOGGER)
+_notices = job_scraping.start()
 
 mobile = NaverCalendar("./config/init.json", MAIN_LOGGER)
 
