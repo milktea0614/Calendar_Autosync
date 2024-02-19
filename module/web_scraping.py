@@ -100,20 +100,23 @@ class JobAlioScraping:
 
                 for _row in selected_list:
                     _column = _row.select("td")
-                    _link = f"https://job.alio.go.kr{_column[2].find('a').get('href')}"
+                    __idx = _column[2].find('a').get('href').split('idx=')[-1]
+                    _link = f"https://job.alio.go.kr/recruitview.do?idx={__idx}"
+                    _mobile_link = f"https://job.alio.go.kr/mobile2021/recruit/recruitView.do?idx={__idx}&pageNo=1&apba_type=&search_yn=&title=&org_type=&org_name=&order=REG_DATE&ing="
+
                     _title = f"[{_column[3].text.strip()}] {_column[2].text.strip()}"
                     _location = _column[4].text.strip().replace("\r", "").replace("\t", "").replace("\n","")
                     _work_type = _column[5].text.strip().replace("\r", "").replace("\t", "").replace("\n","")
-                    _rigister_date = _column[6].text.strip().replace("\r", "").replace("\t", "").replace("\n","")
+                    _register_date = _column[6].text.strip().replace("\r", "").replace("\t", "").replace("\n","")
                     _deadline_date = _column[7].text.strip().replace("\r", "").replace("\t", "").replace("\n","")[:8]
                     _status = _column[8].text.strip()
 
                     _parsing.append({
                         "title": _title,
-                        "rigister_date": _rigister_date,
+                        "rigister_date": _register_date,
                         "deadline_date": f"20{_deadline_date}",
                         "status": _status,
-                        "memo": f"고용형태:{_work_type}\n위치: {_location}\n공고링크:{_link}"
+                        "memo": f"고용형태:{_work_type}\n위치: {_location}\n공고링크: (web){_link}\n\t(mobile){_mobile_link}"
                     })
             else:
                 self._logger.error(msg := f"Could not get the webpage. status code is {response.status_code}")
