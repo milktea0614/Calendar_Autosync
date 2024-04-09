@@ -4,6 +4,7 @@ import datetime
 import json
 import logging
 import os
+import re
 from typing import Union
 
 import requests
@@ -100,11 +101,11 @@ class JobAlioScraping:
 
                 for _row in selected_list:
                     _column = _row.select("td")
-                    __idx = _column[2].find('a').get('href').split('idx=')[-1]
+                    __idx = re.findall(r'\d+', _column[2].find('a').get('href').split('idx=')[-1])[0]
                     _link = f"https://job.alio.go.kr/recruitview.do?idx={__idx}"
                     _mobile_link = f"https://job.alio.go.kr/mobile2021/recruit/recruitView.do?idx={__idx}&pageNo=1&apba_type=&search_yn=&title=&org_type=&org_name=&order=REG_DATE&ing="
 
-                    _title = f"[{_column[3].text.strip()}] {_column[2].text.strip()}"
+                    _title = f"[{_column[3].text.strip()}] {_column[2].text.strip()}".replace("\'", "")
                     _location = _column[4].text.strip().replace("\r", "").replace("\t", "").replace("\n","")
                     _work_type = _column[5].text.strip().replace("\r", "").replace("\t", "").replace("\n","")
                     _register_date = _column[6].text.strip().replace("\r", "").replace("\t", "").replace("\n","")

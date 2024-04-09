@@ -23,7 +23,7 @@
   "mobile": {
     "capabilities": {
       "platformName": "Android",
-      "platformVersion": "12",
+      "platformVersion": "13",
       "automationName": "uiautomator2",
       "deviceName": "R54T3022FVH",
       "appPackage": "com.android.settings",
@@ -32,6 +32,6 @@
       "noReset": true
 
     },
-    "calendar": "공기업 - 정보통신"
+    "calendar": "[공유] 공기업 - 정보통신"
   }
 }
